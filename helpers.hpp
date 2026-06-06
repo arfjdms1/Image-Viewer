@@ -1,6 +1,4 @@
-#ifndef IMAGE_VIEWER_HELPERS_HPP
-#define IMAGE_VIEWER_HELPERS_HPP
-
+#pragma once
 #include <fstream>
 #include <iosfwd>
 #include <vector>
@@ -23,5 +21,3 @@ namespace helpers {
         return byteswap(bigEndianValue);
     }
 }
-
-#endif //IMAGE_VIEWER_HELPERS_HPP
