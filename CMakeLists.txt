@@ -6,8 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 include_directories(.)
 
 add_executable(Image_Viewer
-        main.cpp
+        source/main.cpp
         README.md
-        helpers.hpp
-        decompress.hpp
+        source/utils/helpers.hpp
 )
