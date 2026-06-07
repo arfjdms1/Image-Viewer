@@ -54,14 +54,15 @@ int main() {
 
     image.seekg(9, ios::cur);
 
+    vector<uint8_t> rawCompressedPixelData;
+
     while (true) {
         uint32_t rawNextLength = 0;
         image.read(reinterpret_cast<char*>(&rawNextLength), 4);
 
         // Safety
         if (!image) {
-            cout << "Reached end of FS" << endl;
-            break;
+            return 1;
         }
 
         // Get Next Chunk Metadata
@@ -70,9 +71,10 @@ int main() {
         char nextChunkType[5] = {0};
         image.read(nextChunkType, 4);
 
+
         // Check Chunk for Metadata
         if (strcmp(nextChunkType, "tEXt") == 0) {
-            cout << "Found Metadata Chunk" << endl << "size: " << nextLength << " Bytes" << endl;
+            cout << "  - Found Metadata Chunk: " << "Size: " << nextLength << " Bytes ";
 
             // Output Metadata
             vector<char> chunk(nextLength);
@@ -87,13 +89,38 @@ int main() {
                 }
             }
             image.seekg(4, ios::cur);
+        } else if (strcmp(nextChunkType, "IDAT") == 0) {
+            // Logging
+            cout << "  - Gathering IDAT chunk (" << nextLength << " bytes)" << endl;
+
+            // Get Data
+            vector<uint8_t> temp(nextLength);
+            image.read(reinterpret_cast<char*>(temp.data()), nextLength);
+
+            // Save Data Efficiently
+            rawCompressedPixelData.insert(rawCompressedPixelData.end(), temp.begin(), temp.end());
+
+            // Seek past Next Chunk CRC (Checksum)
+            image.seekg(4, ios::cur);
         } else if (strcmp(nextChunkType, "IEND") == 0) {
-            cout << "Reached end of FS" << endl;
+            cout << endl;
             break;
         } else {
             image.seekg(nextLength + 4, ios::cur);
-            cout << "Found & Skipped Chunk: " << nextChunkType << " (" << nextLength << " bytes)" << endl;
+            cout << "  - Found & Skipped Chunk: " << nextChunkType << " (" << nextLength << " bytes)" << endl;
         }
+    }
+
+    // Verify Data Collection
+    cout << "Got " << rawCompressedPixelData.size() << " bytes of data." << endl;
+
+    // Decompression
+    uint8_t cmfByte = rawCompressedPixelData[0];
+    uint8_t flgByte = rawCompressedPixelData[1];
+
+    // Verify PNG compression Compliance
+    if (uint8_t compressionMethod = cmfByte & 0x0F; compressionMethod != 8) {
+        throw runtime_error("Expected DEFLATE compression (should be 8). Got " + to_string(compressionMethod));
     }
 
     return 0;

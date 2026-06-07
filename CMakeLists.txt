@@ -9,4 +9,5 @@ add_executable(Image_Viewer
         main.cpp
         README.md
         helpers.hpp
+        decompress.hpp
 )
